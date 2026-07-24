@@ -1,3 +1,5 @@
+import json
+
 from dotenv import load_dotenv
 from mem0 import Memory
 
@@ -22,25 +24,39 @@ config = {
 
 mem_client = Memory.from_config(config)
 
-user_query = input("> ")
+while True:
+    user_query = input("> ")
 
-response = client.chat.completions.create(
-    model="gpt-4.1-mini", messages=[{"role": "user", "content": user_query}]
-)
+    search_memory = mem_client.search(query=user_query)
 
-ai_response = response.choices[0].message.content
+    memories = [
+        f"ID: {mem.get('id')}\nMemory: {mem.get('memory')}"
+        for mem in search_memory.get("results")
+    ]
 
-print("AI: ", ai_response)
+    SYSTEM_PROMPT = f"""
+    Here is the context about the user:
+    _{json.dumps(search_memory)}
+    """
 
-mem_client.add(
-    user_id="thakurrohan",
-    messages=[
-        {"role": "user", "content": user_query},
-        {"role": "ai", "content": ai_response},
-    ],
-)
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini", messages=[{"role": "user", "content": user_query}]
+    )
 
-print("Memory has been added!")
+    ai_response = response.choices[0].message.content
+
+    print("AI: ", ai_response)
+
+    mem_client.add(
+        user_id="thakurrohan",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_query},
+            {"role": "ai", "content": ai_response},
+        ],
+    )
+
+    print("Memory has been added!")
 
 
 def main():
