@@ -1,4 +1,7 @@
+from dotenv import load_dotenv
 from mem0 import Memory
+
+load_dotenv()
 
 config = {
     "version": "v.1.1",
@@ -18,6 +21,26 @@ config = {
 }
 
 mem_client = Memory.from_config(config)
+
+user_query = input("> ")
+
+response = client.chat.completions.create(
+    model="gpt-4.1-mini", messages=[{"role": "user", "content": user_query}]
+)
+
+ai_response = response.choices[0].message.content
+
+print("AI: ", ai_response)
+
+mem_client.add(
+    user_id="thakurrohan",
+    messages=[
+        {"role": "user", "content": user_query},
+        {"role": "ai", "content": ai_response},
+    ],
+)
+
+print("Memory has been added!")
 
 
 def main():
